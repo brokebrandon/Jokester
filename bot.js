@@ -42,8 +42,12 @@ client.on('message', async message => {
 			message.reply(`Pong! Latency is ${m.createdTimestamp - message.createdTimestamp}ms.`);
 			break;
 		case `${config.bot.prefix}tellmea`:
-			getJoke(args[0]).then(message.reply(result));
+			var joke = await getJoke(args[0]);
 
+			setTimeout((joke) => {
+				console.log(`Inside setTimeout() - ${joke}`);
+				message.reply(joke);
+			}, 250)
 			break;
 		default:
 			break;
@@ -51,15 +55,18 @@ client.on('message', async message => {
 
 });
 
-async function getJoke(category){
-	var joke;
+function getJoke(category){
 	let sql = `SELECT joke FROM jokes where category='${category}'`;
-	await db.all(sql, [], (err, rows) => {
-		console.log(rows[0].joke);
+	var joke;
+	db.all(sql, [], (err, rows) => {
 		joke = rows[0].joke;
-		return joke;
-
+		console.log(`inside db.all() - ${joke}`);
 	});
+
+	setTimeout(joke => {
+		console.log(`getJoke(args) has returned - ${joke}`)
+		return joke;
+	}, 25);
 }
 
 client.login(config.bot.token);
