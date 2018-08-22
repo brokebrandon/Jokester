@@ -1,0 +1,6 @@
+#files
+botconfig.json
+jokester.db
+
+#directories
+node_modules
