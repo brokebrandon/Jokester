@@ -34,15 +34,16 @@ client.on('message', async message => {
 	const command = messageArray[0];
 	const args = messageArray.slice(1);
 
-	switch (command) {
+	switch(command) {
 		case `${config.bot.prefix}ping`:
 			const m = await message.channel.send('Calculating ping...');
-			m.edit(`Pong! Latency is ${m.createdTimestamp - message.createdTimestamp}ms.`);
+			m.delete();
+
+			message.reply(`Pong! Latency is ${m.createdTimestamp - message.createdTimestamp}ms.`);
 			break;
 		case `${config.bot.prefix}tellmea`:
-			console.log(args[0]);
-			let joke = getJoke(args[0]);
-			message.channel.send(joke);
+			getJoke(args[0]).then(message.reply(result));
+
 			break;
 		default:
 			break;
@@ -50,8 +51,15 @@ client.on('message', async message => {
 
 });
 
-function getJoke(category){
-	// TODO: get joke from database
+async function getJoke(category){
+	var joke;
+	let sql = `SELECT joke FROM jokes where category='${category}'`;
+	await db.all(sql, [], (err, rows) => {
+		console.log(rows[0].joke);
+		joke = rows[0].joke;
+		return joke;
+
+	});
 }
 
 client.login(config.bot.token);
