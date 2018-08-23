@@ -66,7 +66,7 @@ function getJoke(category){
 	setTimeout(joke => {
 		console.log(`getJoke(args) has returned - ${joke}`)
 		return joke;
-	}, 25);
+	}, 5000);
 }
 
 client.login(config.bot.token);
