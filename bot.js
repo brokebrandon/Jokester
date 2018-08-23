@@ -38,17 +38,24 @@ client.on('message', async message => {
 		case `${config.bot.prefix}tellmea`:
 			db.all(`SELECT * FROM jokes where category='${args[0]}'`)
 				.then(row => {
-					console.log(row.length);
-					message.reply(row[Math.floor(Math.random() * (row.length - 0 + 1)) + 0].joke);
+					let id = Math.floor(Math.random() * (row.length - 1 + 1));
+					message.reply(row[id].joke);
 				})
-				.catch(() => {
-					console.log(console.error);
+				.catch(error => {
+					console.log(error);
 				});
 			break;
 		default:
 			break;
 	}
 
+});
+
+client.on('messageReactionAdd', reaction => {
+	if(message.author.id == config.bot.id) {
+		// TODO: handle reactions to jokes
+		console.log(reaction);
+	}
 });
 
 client.login(config.bot.token);
