@@ -6,14 +6,8 @@ const Discord = require('discord.js');
 const client = new Discord.Client();
 
 // Set up connection to jokes database
-const sqlite3 = require('sqlite3').verbose();
-let db = new sqlite3.Database(`./${config.database.name}`, err => {
-	if(err) {
-		return console.log(err.message);
-	}
-	console.log(`Connected to ${config.database.name}`);
-
-});
+const db = require('sqlite');
+db.open(`./${config.db.name}`);
 
 // Get the Jokester ready for action
 client.on('ready', () => {
@@ -42,31 +36,19 @@ client.on('message', async message => {
 			message.reply(`Pong! Latency is ${m.createdTimestamp - message.createdTimestamp}ms.`);
 			break;
 		case `${config.bot.prefix}tellmea`:
-			var joke = await getJoke(args[0]);
-
-			setTimeout((joke) => {
-				console.log(`Inside setTimeout() - ${joke}`);
-				message.reply(joke);
-			}, 250)
+			db.all(`SELECT * FROM jokes where category='${args[0]}'`)
+				.then(row => {
+					console.log(row.length);
+					message.reply(row[Math.floor(Math.random() * (row.length - 0 + 1)) + 0].joke);
+				})
+				.catch(() => {
+					console.log(console.error);
+				});
 			break;
 		default:
 			break;
 	}
 
 });
-
-function getJoke(category){
-	let sql = `SELECT joke FROM jokes where category='${category}'`;
-	var joke;
-	db.all(sql, [], (err, rows) => {
-		joke = rows[0].joke;
-		console.log(`inside db.all() - ${joke}`);
-	});
-
-	setTimeout(joke => {
-		console.log(`getJoke(args) has returned - ${joke}`)
-		return joke;
-	}, 5000);
-}
 
 client.login(config.bot.token);
