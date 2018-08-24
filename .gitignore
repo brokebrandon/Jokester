@@ -4,7 +4,3 @@ config.json
 
 #directories
 node_modules
-
-CREATE TABLE jokes ('id' INTEGER PRIMARY KEY, 'author' varchar(32) DEFAULT NULL, 'upvote' int(11) DEFAULT 0, 'downvote' int(11) DEFAULT 0, 'category' varchar(25) NOT NULL, 'joke' varchar(1000)NOT NULL);
-INSERT INTO jokes VALUES(1,'Youngqueazy#7820',4,1,'dad','Last night I dreamt I was a muffler. I woke up exhausted!');
-INSERT INTO jokes VALUES(2,'Youngqueazy#7820',2,0,'dad','I just watched a show about beavers. It was the best dam show Ive ever seen.');

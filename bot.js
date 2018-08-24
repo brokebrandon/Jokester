@@ -203,7 +203,7 @@ async function sendJoke(sql, message) {
 
 		let joke_id = Math.floor(Math.random() * (row.length - 1 + 1));
 		rateReminder = `\n\n😆 (${row[joke_id].upvotes})  😦 (${row[joke_id].downvotes})`;
-		message.reply(`**${row[joke_id].joke}**${userLine}${rateReminder}`)
+		message.reply(`**${row[joke_id].joke}**${rateReminder}`); //${userLine}
 	})
 	.catch(error => {
 		console.log(error);
