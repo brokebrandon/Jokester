@@ -41,28 +41,28 @@ client.on('message', async message => {
 
 			break;
 		case `${config.bot.prefix}tellmea`:
+			let sql;
 			if(args[0] != 'joke') {
-				db.all(`SELECT * FROM jokes where category='${args[0]}'`)
-				.then(row => {
-					let joke_id = Math.floor(Math.random() * (row.length - 1 + 1));
-					rateReminder = `\n\n😆 (${row[joke_id].upvotes})  😦 (${row[joke_id].downvotes})`;
-					message.reply(`**${row[joke_id].joke}**${rateReminder}`)
-				})
-				.catch(error => {
-					console.log(error);
-				});
+
+				// TODO: figure out how to emulate full outer join with sqlite
+				// sql = `SELECT jokes.*, user.*
+				// 				FROM jokes
+				// 				LEFT JOIN user USING(user_id)
+				// 				UNION ALL
+				// 				SELECT jokes.*,
+				// 							 user.*
+				// 				FROM user
+				// 				LEFT JOIN jokes USING(user_id)
+				// 				WHERE jokes.user_id IS NULL`;
+
+				sql = `SELECT * FROM jokes WHERE category='${args[0]}'`;
+				sendJoke(sql, message);
+
 				break;
 			}
 
-			db.all(`SELECT * FROM jokes`)
-			.then(row => {
-				let joke_id = Math.floor(Math.random() * (row.length - 1 + 1));
-				rateReminder = `\n\n😆 (${row[joke_id].upvotes})  😦 (${row[joke_id].downvotes})`;
-				message.reply(`**${row[joke_id].joke}**${rateReminder}`)
-			})
-			.catch(error => {
-				console.log(error);
-			});
+			sql = `SELECT * FROM jokes`
+			sendJoke(sql, message);
 
 			break;
 		default:
@@ -117,9 +117,7 @@ client.on('messageReactionAdd', (reaction, user) => {
 					rateReminder = `\n\n😆 (${row.upvotes})  😦 (${row.downvotes})`;
 					reaction.message.edit(`**${joke}**${rateReminder}`);
 				})
-				.catch(error => {
-					console.log(error);
-				});
+				.catch();
 
 			break;
 		default:
@@ -185,5 +183,31 @@ client.on('messageReactionRemove', (reaction, user) => {
 	}
 
 });
+
+
+async function sendJoke(sql, message) {
+	db.all(sql)
+	.then(row => {
+
+		// TODO: Implement this code once full outer join with sqlite is figured out
+		// let discordUser = client.users.get(user_id.toString());
+		// let user = JSON.stringify({
+		// 	id:`${row.user_id}`,
+		// 	name:`${discordUser.username}`,
+		// 	discriminator:`${discordUser.discriminator}`,
+		// 	upvotes:`${row.upvotes}`,
+		// 	downvotes:`${row.downvotes}`,
+		// 	score:`${row.upvotes} - ${row.downvotes} < 0 ? 0 : value`
+		// });
+		// let userLine = `\n*submitted by ${user.username}${user.discriminator} (${user.score})*`
+
+		let joke_id = Math.floor(Math.random() * (row.length - 1 + 1));
+		rateReminder = `\n\n😆 (${row[joke_id].upvotes})  😦 (${row[joke_id].downvotes})`;
+		message.reply(`**${row[joke_id].joke}**${userLine}${rateReminder}`)
+	})
+	.catch(error => {
+		console.log(error);
+	});
+}
 
 client.login(config.bot.token);
