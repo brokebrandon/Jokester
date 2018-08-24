@@ -129,6 +129,61 @@ client.on('messageReactionAdd', (reaction, user) => {
 });
 
 
+client.on('messageReactionRemove', (reaction, user) => {
+	if(reaction.message.author.id != config.bot.id) {
+		return;
+	}
 
+	let jokeArray = reaction.message.content.split('**');
+	let joke = jokeArray[1];
+
+	switch(reaction.emoji.name) {
+		case '😆':
+			sql = `UPDATE jokes SET upvotes = upvotes - 1 WHERE joke="${joke}"`;
+			db.run(sql, error => {
+				console.log(error);
+			});
+
+			sql = `UPDATE user SET upvotes = upvotes - 1 WHERE user_id="${user.id}"`;
+			db.run(sql, error => {
+				console.log(error);
+			});
+
+			db.get(`SELECT * FROM jokes where joke='${joke}'`)
+				.then(row => {
+					rateReminder = `\n\n😆 (${row.upvotes})  😦 (${row.downvotes})`;
+					reaction.message.edit(`**${joke}**${rateReminder}`);
+				})
+				.catch(error => {
+					console.log(error);
+				});
+
+			break;
+		case '😦':
+			sql = `UPDATE jokes SET downvotes = downvotes - 1 WHERE joke="${joke}"`;
+			db.run(sql, error => {
+				console.log(error);
+			});
+
+			sql = `UPDATE user SET downvotes = downvotes - 1 WHERE user_id="${user.id}"`;
+			db.run(sql, error => {
+				console.log(error);
+			});
+
+			db.get(`SELECT * FROM jokes where joke='${joke}'`)
+				.then(row => {
+					rateReminder = `\n\n😆 (${row.upvotes})  😦 (${row.downvotes})`;
+					reaction.message.edit(`**${joke}**${rateReminder}`);
+				})
+				.catch(error => {
+					console.log(error);
+				});
+
+			break;
+		default:
+			break;
+	}
+
+});
 
 client.login(config.bot.token);
