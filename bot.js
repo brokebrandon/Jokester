@@ -9,9 +9,15 @@ const client = new Discord.Client();
 const db = require('sqlite');
 db.open(`./${config.db.name}`);
 
-//rateReminder appended at end of some messages
-var rateReminder;
+// English dictionary
+// TODO: add english dictionary
 
+// used to compare submissions to existing jokes
+var stringSimilarity = require('string-similarity');
+
+// rateReminder appended at end of some messages
+var rateReminder;
+var jokes = new Array();
 
 // Get the Jokester ready for action
 client.on('ready', () => {
@@ -19,6 +25,14 @@ client.on('ready', () => {
 	console.log(`Serving ${client.users.size} users.`);
 	client.user.setActivity('Joke Simulator');
 
+	db.all('SELECT joke from jokes')
+	.then(row => {
+		row.forEach(joke => {
+			jokes.push(joke);
+		});
+	});
+
+	console.log(jokes);
 });
 
 
@@ -29,32 +43,22 @@ client.on('message', async message => {
 	// if message doesn't start with prefix, ignore it
 	if(message.content.indexOf(config.bot.prefix) !== 0) return;
 
+	let prefix = config.bot.prefix;
 	let messageArray = message.content.toLowerCase().split(' ');
 	const command = messageArray[0];
 	const args = messageArray.slice(1);
 
 	switch(command) {
-		case `${config.bot.prefix}ping`:
+		case `${prefix}ping`:
 			const m = await message.channel.send('Calculating ping...');
 			m.delete();
 			message.reply(`Pong! Latency is ${m.createdTimestamp - message.createdTimestamp}ms.`);
 
 			break;
-		case `${config.bot.prefix}tellmea`:
+		case `${prefix}tellmea`:
 			let sql;
+
 			if(args[0] != 'joke') {
-
-				// TODO: figure out how to emulate full outer join with sqlite
-				// sql = `SELECT jokes.*, user.*
-				// 				FROM jokes
-				// 				LEFT JOIN user USING(user_id)
-				// 				UNION ALL
-				// 				SELECT jokes.*,
-				// 							 user.*
-				// 				FROM user
-				// 				LEFT JOIN jokes USING(user_id)
-				// 				WHERE jokes.user_id IS NULL`;
-
 				sql = `SELECT * FROM jokes WHERE category='${args[0]}'`;
 				sendJoke(sql, message);
 
@@ -65,6 +69,9 @@ client.on('message', async message => {
 			sendJoke(sql, message);
 
 			break;
+			case `${prefix}submit`:
+				addJoke(args, message);
+				break;
 		default:
 			break;
 	}
@@ -93,8 +100,14 @@ client.on('messageReactionAdd', (reaction, user) => {
 
 			db.get(`SELECT * FROM jokes where joke='${joke}'`)
 				.then(row => {
-					rateReminder = `\n\n😆 (${row.upvotes})  😦 (${row.downvotes})`;
-					reaction.message.edit(`**${joke}**${rateReminder}`);
+					let discordUser = client.users.get(row.user_id.toString());
+					let user = discordUser.username;
+					let discriminator = discordUser.discriminator;
+
+					let userLine = `\n________________\n*submitted by ${user}#${discriminator}*`;
+					rateReminder = `\n😆 (${row.upvotes})  😦 (${row.downvotes})`;
+
+					reaction.message.edit(`**${joke}**${userLine}${rateReminder}`);
 				})
 				.catch(error => {
 					console.log(error);
@@ -114,10 +127,18 @@ client.on('messageReactionAdd', (reaction, user) => {
 
 			db.get(`SELECT * FROM jokes where joke='${joke}'`)
 				.then(row => {
-					rateReminder = `\n\n😆 (${row.upvotes})  😦 (${row.downvotes})`;
-					reaction.message.edit(`**${joke}**${rateReminder}`);
+					let discordUser = client.users.get(row.user_id.toString());
+					let user = discordUser.username;
+					let discriminator = discordUser.discriminator;
+
+					let userLine = `\n________________\n*submitted by ${user}#${discriminator}*`;
+					rateReminder = `\n😆 (${row.upvotes})  😦 (${row.downvotes})`;
+
+					reaction.message.edit(`**${joke}**${userLine}${rateReminder}`);
 				})
-				.catch();
+				.catch(error => {
+					console.log(error);
+				});
 
 			break;
 		default:
@@ -149,8 +170,14 @@ client.on('messageReactionRemove', (reaction, user) => {
 
 			db.get(`SELECT * FROM jokes where joke='${joke}'`)
 				.then(row => {
-					rateReminder = `\n\n😆 (${row.upvotes})  😦 (${row.downvotes})`;
-					reaction.message.edit(`**${joke}**${rateReminder}`);
+					let discordUser = client.users.get(row.user_id.toString());
+					let user = discordUser.username;
+					let discriminator = discordUser.discriminator;
+
+					let userLine = `\n________________\n*submitted by ${user}#${discriminator}*`;
+					rateReminder = `\n😆 (${row.upvotes})  😦 (${row.downvotes})`;
+
+					reaction.message.edit(`**${joke}**${userLine}${rateReminder}`);
 				})
 				.catch(error => {
 					console.log(error);
@@ -170,8 +197,14 @@ client.on('messageReactionRemove', (reaction, user) => {
 
 			db.get(`SELECT * FROM jokes where joke='${joke}'`)
 				.then(row => {
-					rateReminder = `\n\n😆 (${row.upvotes})  😦 (${row.downvotes})`;
-					reaction.message.edit(`**${joke}**${rateReminder}`);
+					let discordUser = client.users.get(row.user_id.toString());
+					let user = discordUser.username;
+					let discriminator = discordUser.discriminator;
+
+					let userLine = `\n________________\n*submitted by ${user}#${discriminator}*`;
+					rateReminder = `\n😆 (${row.upvotes})  😦 (${row.downvotes})`;
+
+					reaction.message.edit(`**${joke}**${userLine}${rateReminder}`);
 				})
 				.catch(error => {
 					console.log(error);
@@ -185,25 +218,33 @@ client.on('messageReactionRemove', (reaction, user) => {
 });
 
 
+async function addJoke(args, message) {
+	// TODO: code up this function so users can add jokes
+	// check joke length
+	// check similarity of existing jokes
+	if(args.length < 6) {
+		message.reply('Sorry, your joke is too short!');
+		return;
+	}
+
+	
+}
+
+
 async function sendJoke(sql, message) {
 	db.all(sql)
 	.then(row => {
-
-		// TODO: Implement this code once full outer join with sqlite is figured out
-		// let discordUser = client.users.get(user_id.toString());
-		// let user = JSON.stringify({
-		// 	id:`${row.user_id}`,
-		// 	name:`${discordUser.username}`,
-		// 	discriminator:`${discordUser.discriminator}`,
-		// 	upvotes:`${row.upvotes}`,
-		// 	downvotes:`${row.downvotes}`,
-		// 	score:`${row.upvotes} - ${row.downvotes} < 0 ? 0 : value`
-		// });
-		// let userLine = `\n*submitted by ${user.username}${user.discriminator} (${user.score})*`
-
 		let joke_id = Math.floor(Math.random() * (row.length - 1 + 1));
-		rateReminder = `\n\n😆 (${row[joke_id].upvotes})  😦 (${row[joke_id].downvotes})`;
-		message.reply(`**${row[joke_id].joke}**${rateReminder}`); //${userLine}
+
+		let discordUser = client.users.get(row[joke_id].user_id.toString());
+		let user = discordUser.username;
+		let discriminator = discordUser.discriminator;
+
+		let joke = `${row[joke_id].joke}`;
+		let userLine = `\n________________\n*submitted by ${user}#${discriminator}*`;
+		rateReminder = `\n😆 (${row[joke_id].upvotes})  😦 (${row[joke_id].downvotes})`;
+
+		message.reply(`**${joke}**${userLine}${rateReminder}`);
 	})
 	.catch(error => {
 		console.log(error);

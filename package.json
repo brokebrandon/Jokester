@@ -5,7 +5,8 @@
   "main": "bot.js",
   "dependencies": {
     "discord.js": "^11.4.2",
-    "sqlite": "^3.0.0"
+    "sqlite": "^3.0.0",
+    "string-similarity": "^1.2.1"
   },
   "devDependencies": {},
   "scripts": {
