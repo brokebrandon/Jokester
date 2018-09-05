@@ -1,6 +1,8 @@
 #files
+.ftpconfig
 config.json
 *.db
+*_old.*
 
 #directories
 node_modules

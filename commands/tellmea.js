@@ -1,10 +1,7 @@
-const config = require('../config.json');
 const Discord = require('discord.js');
+const mysql = require('mysql');
 
-const db = require('sqlite');
-db.open(`./${config.db.name}`);
-
-modules.exports.run async (bot, message, args) {
+module.exports.run = async (client, message, args, db) => {
 	let sql;
 
 	switch(args[0]) {
@@ -12,25 +9,25 @@ modules.exports.run async (bot, message, args) {
 			sql = `SELECT * FROM jokes`;
 			break;
 		default:
-			sql = `SELECT * FROM jokes WHERE category='${args[0]}'`;
+			sql = `SELECT * FROM jokes WHERE category=${mysql.escape(args[0])}`;
 			break;
 	}
 
-	db.all(sql)
-	.then(row => {
-		let joke_id = Math.floor(Math.random() * (row.length - 1 + 1));
+	db.query(sql, (error, rows) => {
+		let joke_id = Math.floor(Math.random() * (rows.length - 1 + 1));
+		let joke = rows[joke_id];
 
-		let discordUser = client.users.get(row[joke_id].user_id.toString());
+		let discordUser = client.users.get(joke.user_id);
 		let user = discordUser.username;
 		let discriminator = discordUser.discriminator;
 
-		let joke = `${row[joke_id].joke}`;
 		let userLine = `\n________________\n*submitted by ${user}#${discriminator}*`;
-		rateReminder = `\n😆 (${row[joke_id].upvotes})  😦 (${row[joke_id].downvotes})`;
+		let rateReminder = `\n😆 (${joke.upvotes})  😦 (${joke.downvotes})`;
 
-		message.reply(`**${joke}**${userLine}${rateReminder}`);
-	})
-	.catch(error => {
-		console.log(error);
+		message.reply(`**${joke.joke}**${userLine}${rateReminder}`);
 	});
+}
+
+module.exports.help = {
+	name: 'tellmea'
 }
