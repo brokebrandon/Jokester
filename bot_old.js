@@ -213,7 +213,6 @@ client.on('messageReactionRemove', (reaction, user) => {
 		default:
 			break;
 	}
-
 });
 
 

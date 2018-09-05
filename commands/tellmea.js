@@ -3,13 +3,14 @@ const mysql = require('mysql');
 
 module.exports.run = async (client, message, args, db) => {
 	let sql;
-
-	switch(args[0]) {
+	let cat = args[0].toLowerCase();
+	
+	switch(cat) {
 		case 'joke':
 			sql = `SELECT * FROM jokes`;
 			break;
 		default:
-			sql = `SELECT * FROM jokes WHERE category=${mysql.escape(args[0])}`;
+			sql = `SELECT * FROM jokes WHERE category=${mysql.escape(cat)}`;
 			break;
 	}
 
